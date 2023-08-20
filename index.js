@@ -7,7 +7,7 @@
  */
 
 require('./blob.toArrayBuffer')
-let crc32 = require('./crc-32')
+let crc32 = require('./crc32')
 
 
 // Used for fast-ish conversion between uint8s and uint32s/int32s.
@@ -410,7 +410,8 @@ function insertMetadata(chunks,metadata){
 	}
 	if(metadata.tEXt){
 		for(var keyword in metadata.tEXt){
-			chunks.splice(-1, 0, textEncode(keyword, metadata.tEXt[keyword]))
+			// Always place tEXt before IDAT
+			chunks.splice(1, 0, textEncode(keyword, metadata.tEXt[keyword]))
 		}
 	}
 
