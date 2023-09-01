@@ -70,8 +70,8 @@ The `iTXt` chunk format allows metadata to be internationalised. The `keyword` s
   "iTXt": {
     "Description": {
       "language": "de-de",
-			"translatedKeyword": "Beschreibung",
-			"content": "Eine Beschreibung hier"
+      "translatedKeyword": "Beschreibung",
+      "content": "Eine Beschreibung hier"
     }
   }
 }
