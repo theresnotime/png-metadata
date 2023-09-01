@@ -498,8 +498,8 @@ function insertMetadata(chunks,metadata){
 			 * 
 			 * iTXt: {
 			 *   Description: {
-			 *     language: "de-de"
-			 * 		 translatedKeyword: "Beschreibung"
+			 *     language: "de-de",
+			 * 		 translatedKeyword: "Beschreibung",
 			 *     content: "Eine Beschreibung hier"
 			 *   }
 			 * }

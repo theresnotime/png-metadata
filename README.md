@@ -61,6 +61,34 @@ image with 300 dpi
 }
 ```
 
+### Adding iTXt metadata
+
+The `iTXt` chunk format allows metadata to be internationalised. The `keyword` should remain in english as per `tEXt` chunks, but can contain `language` and `translatedKeyword` fields. For example, to specify a descripion in german:
+
+```js
+{
+  "iTXt": {
+    "Description": {
+      "language": "de-de",
+			"translatedKeyword": "Beschreibung",
+			"content": "Eine Beschreibung hier"
+    }
+  }
+}
+```
+
+The `language` and `translatedKeyword` fields are both optional.
+
+If neither of those fields are necessary, `iTXt` can also be specified as pairs of strings, the same as `tEXt`:
+
+```js
+{
+  "iTXt": {
+    "Description": "Some description here"
+  }
+}
+```
+
 ### writing metadata
 
 ```javascript
