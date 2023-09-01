@@ -138,6 +138,73 @@ function textDecode (data) {
 }
 
 /**
+ * Encode an iTXt chunk as per https://www.w3.org/TR/2003/REC-PNG-20031110/#11iTXt
+ */
+function encodeiTXt(keyword, content, language = '', translatedKeyword = '') {
+	if (keyword.length > 79) {
+		throw new Error(`Keyword "${keyword}" is longer than the 79-character limit imposed by the PNG specification`);
+	}
+
+	const textEncoder = new TextEncoder();
+	const utfTranslatedKeyword = textEncoder.encode(translatedKeyword);
+	const utfContent = textEncoder.encode(content);
+
+	const totalSize = keyword.length + utfContent.length + language.length + utfTranslatedKeyword.length + 5;
+
+	const output = new Uint8Array(totalSize);
+	let idx = 0;
+
+	for (let i = 0; i < keyword.length; i++) {
+		const charCode = keyword.charCodeAt(i);
+		if (charCode === 0x00) {
+			throw new Error("Null byte is not permitted in iTXt keywords")
+		}
+		output[idx++] = charCode;
+	}
+
+	output[idx++] = 0x00 // Keyword terminator
+	output[idx++] = 0x00 // Compression flag (no compression)
+	output[idx++] = 0x00 // Compression method (none)
+
+	if (language) {
+		for (let i = 0; i < language.length; i++) {
+			const charCode = language.charCodeAt(i);
+			if (charCode === 0x00) {
+				throw new Error("Null byte is not permitted in iTXt language code")
+			}
+			output[idx++] = charCode;
+		}
+	}
+
+	output[idx++] = 0x00 // Language code terminator
+
+	if (translatedKeyword) {
+		for (let i = 0; i < utfTranslatedKeyword.length; i++) {
+			const charCode = utfTranslatedKeyword[i];
+			if (charCode === 0x00) {
+				throw new Error("Null byte is not permitted in iTXt keywords")
+			}
+			output[idx++] = charCode;
+		}
+	}
+
+	output[idx++] = 0x00 // Translated keyword terminator
+
+	for (let i = 0; i < utfContent.length; i++) {
+		const charCode = utfContent[i];
+		if (charCode === 0x00) {
+			throw new Error("Null byte is not permitted in iTXt content")
+		}
+		output[idx++] = charCode;
+	}
+
+	return {
+		name: 'iTXt',
+		data: output
+	}
+}
+
+/**
  * https://github.com/hughsk/png-chunks-extract
  * Extract the data chunks from a PNG file.
  * Useful for reading the metadata of a PNG image, or as the base of a more complete PNG parser.
@@ -407,10 +474,42 @@ function insertMetadata(chunks,metadata){
 			}
 		}
 	}
+	
 	if(metadata.tEXt){
 		for(var keyword in metadata.tEXt){
 			// Always place tEXt before IDAT
 			chunks.splice(1, 0, textEncode(keyword, metadata.tEXt[keyword]))
+		}
+	}
+
+	if (metadata.iTXt) {
+		for(var keyword in metadata.iTXt) {
+			const value = metadata.iTXt[keyword];
+
+			/**
+			 * iTXt can either be specified as key-value pairs of strings
+			 * 
+			 * iTXt: {
+			 *   Description: "Some description here"
+			 * }
+			 * 
+			 * or as a map of objects, to support i18n. `language` and `translatedKeyword`
+			 * are both optional.
+			 * 
+			 * iTXt: {
+			 *   Description: {
+			 *     language: "de-de"
+			 * 		 translatedKeyword: "Beschreibung"
+			 *     content: "Eine Beschreibung hier"
+			 *   }
+			 * }
+			 */
+			const encodedValue = typeof value === 'string'
+				? encodeiTXt(keyword, value) 
+				: encodeiTXt(keyword, value.content, value.language, value.translatedKeyword);
+
+			// Always place iTXt before IDAT
+			chunks.splice(1, 0, encodedValue)
 		}
 	}
 
